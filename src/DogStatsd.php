@@ -46,6 +46,10 @@ class DogStatsd
      * @var int Config pass-through for CURLOPT_SSL_VERIFYPEER; default 1
      */
     private $curlVerifySslPeer;
+    /**
+     * @var array A set of common tags that are always added to metrics
+     */
+    private $tags = [];
 
     private static $__eventUrl = '/api/v1/events';
 
@@ -56,7 +60,9 @@ class DogStatsd
      * datadog_host,
      * curl_ssl_verify_host,
      * curl_ssl_verify_peer,
-     * api_key and app_key
+     * api_key
+     * app_key
+     * tags
      *
      * @param array $config
      */
@@ -70,6 +76,8 @@ class DogStatsd
 
         $this->apiKey = isset($config['api_key']) ? $config['api_key'] : null;
         $this->appKey = isset($config['app_key']) ? $config['app_key'] : null;
+
+        $this->tags = isset($config['tags']) ? $config['tags'] : [];
 
         if ($this->apiKey !== null) {
             $this->submitEventsOver = 'TCP';
@@ -199,6 +207,13 @@ class DogStatsd
      **/
     private function serialize_tags($tags)
     {
+        if (!is_array($tags)) {
+            $tags = [];
+        }
+        $tags = array_merge(
+            $this->tags,
+            $tags
+        );
         if (is_array($tags) && count($tags) > 0) {
             $data = array();
             foreach ($tags as $tag_key => $tag_val) {
